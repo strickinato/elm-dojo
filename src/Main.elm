@@ -4,6 +4,7 @@ import Browser
 import Html exposing (Html)
 import Html.Attributes exposing (style, value)
 import Html.Events exposing (onClick)
+import Random
 
 
 type alias Model =
@@ -19,20 +20,28 @@ type alias SavedCounter =
     }
 
 
-initialModel : Model
-initialModel =
-    { counter = 0
-    , savedCounters = []
-    , inputBoxText = "input text here!"
-    }
+initialModel : () -> ( Model, Cmd Msg )
+initialModel argumentIDontCareAbout =
+    ( { counter = 0
+      , savedCounters = []
+      , inputBoxText = "input text here!"
+      }
+    , Random.generate GeneratedNumber randomNumber
+    )
 
 
 main =
-    Browser.sandbox
+    Browser.element
         { init = initialModel
         , view = view
         , update = update
+        , subscriptions = subscriptions
         }
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none
 
 
 type Msg
@@ -41,19 +50,37 @@ type Msg
     | Reset
     | SaveCurrentCounterValue
     | InputChanged String
+    | GeneratedNumber Int
+    | GenerateANewNumber
 
 
-update : Msg -> Model -> Model
-update dog model =
-    case dog of
+randomNumber : Random.Generator Int
+randomNumber =
+    Random.int -100 100
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
         Increment ->
-            { model | counter = model.counter + 1 }
+            ( { model | counter = model.counter + 1 }
+            , Cmd.none
+            )
 
         Decrement ->
-            { model | counter = model.counter - 1 }
+            ( { model | counter = model.counter - 1 }
+            , Cmd.none
+            )
 
         Reset ->
-            { model | counter = 0 }
+            ( { model | counter = 0 }
+            , Cmd.none
+            )
+
+        GenerateANewNumber ->
+            ( model
+            , Random.generate GeneratedNumber randomNumber
+            )
 
         SaveCurrentCounterValue ->
             let
@@ -62,13 +89,20 @@ update dog model =
                     , name = model.inputBoxText
                     }
             in
-            { model
+            ( { model
                 | savedCounters = newCounter :: model.savedCounters
                 , inputBoxText = ""
-            }
+              }
+            , Cmd.none
+            )
 
         InputChanged text ->
-            { model | inputBoxText = text }
+            ( { model | inputBoxText = text }
+            , Cmd.none
+            )
+
+        GeneratedNumber int ->
+            ( { model | counter = int }, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -79,6 +113,7 @@ view model =
         , Html.button [ onClick Decrement ] [ Html.text "-" ]
         , Html.button [ onClick Reset ] [ Html.text "reset" ]
         , Html.button [ onClick SaveCurrentCounterValue ] [ Html.text "save" ]
+        , Html.button [ onClick GenerateANewNumber ] [ Html.text "random number" ]
         , Html.input
             [ value model.inputBoxText
             , Html.Events.onInput InputChanged
