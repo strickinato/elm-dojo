@@ -4,6 +4,7 @@ import Browser
 import Html exposing (Html)
 import Html.Attributes exposing (style, value)
 import Html.Events exposing (onClick)
+import List.Extra
 import Random
 
 
@@ -17,6 +18,7 @@ type alias Model =
 type alias SavedCounter =
     { name : String
     , number : Int
+    , editing : Bool
     }
 
 
@@ -52,6 +54,7 @@ type Msg
     | InputChanged String
     | GeneratedNumber Int
     | GenerateANewNumber
+    | MakeCounterEditable Int
 
 
 randomNumber : Random.Generator Int
@@ -87,6 +90,7 @@ update msg model =
                 newCounter =
                     { number = model.counter
                     , name = model.inputBoxText
+                    , editing = False
                     }
             in
             ( { model
@@ -103,6 +107,23 @@ update msg model =
 
         GeneratedNumber int ->
             ( { model | counter = int }, Cmd.none )
+
+        MakeCounterEditable index ->
+            let
+                newCounters =
+                    List.Extra.updateAt
+                        index
+                        (\s -> { s | editing = True })
+                        model.savedCounters
+            in
+            ( { model | savedCounters = newCounters }
+            , Cmd.none
+            )
+
+
+makeEditable : SavedCounter -> SavedCounter
+makeEditable savedCounter =
+    { savedCounter | editing = True }
 
 
 view : Model -> Html Msg
@@ -126,15 +147,23 @@ view model =
 renderSavedCounters : List SavedCounter -> Html Msg
 renderSavedCounters savedCounters =
     savedCounters
+        |> List.indexedMap renderSavedCounter
         |> List.reverse
-        |> List.map renderSavedCounter
         |> Html.ul []
 
 
-renderSavedCounter : SavedCounter -> Html Msg
-renderSavedCounter savedCounter =
-    Html.li []
+renderSavedCounter : Int -> SavedCounter -> Html Msg
+renderSavedCounter idx savedCounter =
+    let
+        writtenArea =
+            if savedCounter.editing then
+                Html.input [ value savedCounter.name ] []
+
+            else
+                Html.text savedCounter.name
+    in
+    Html.li [ onClick (MakeCounterEditable idx) ]
         [ Html.text (String.fromInt savedCounter.number)
         , Html.text ", "
-        , Html.text savedCounter.name
+        , writtenArea
         ]
