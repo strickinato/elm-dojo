@@ -2,15 +2,15 @@
 
 * Install elm:
 
-`npm install -g elm`
+`> npm install -g elm`
 
 * Start running
 
-`elm reactor`
+`> ./run.sh`
 
 * See your work
 
-[](http://localhost:8000/src/Main.elm)
+[](http://localhost:8000)
 
 
 

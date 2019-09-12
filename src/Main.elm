@@ -4,6 +4,7 @@ import Browser
 import Html exposing (Html)
 import Html.Attributes exposing (style, value)
 import Html.Events exposing (onClick)
+import Json.Decode as Decode
 import List.Extra
 import Random
 
@@ -55,6 +56,8 @@ type Msg
     | GeneratedNumber Int
     | GenerateANewNumber
     | MakeCounterEditable Int
+    | UpdateCounterText Int String
+    | SaveCounterText Int
 
 
 randomNumber : Random.Generator Int
@@ -120,6 +123,35 @@ update msg model =
             , Cmd.none
             )
 
+        UpdateCounterText index newString ->
+            let
+                newCounters =
+                    List.Extra.updateAt
+                        index
+                        (\s ->
+                            { s
+                                | editing = True
+                                , name = newString
+                            }
+                        )
+                        model.savedCounters
+            in
+            ( { model | savedCounters = newCounters }
+            , Cmd.none
+            )
+
+        SaveCounterText index ->
+            let
+                newCounters =
+                    List.Extra.updateAt
+                        index
+                        (\s -> { s | editing = False })
+                        model.savedCounters
+            in
+            ( { model | savedCounters = newCounters }
+            , Cmd.none
+            )
+
 
 makeEditable : SavedCounter -> SavedCounter
 makeEditable savedCounter =
@@ -157,7 +189,14 @@ renderSavedCounter idx savedCounter =
     let
         writtenArea =
             if savedCounter.editing then
-                Html.input [ value savedCounter.name ] []
+                Html.span []
+                    [ Html.input
+                        [ value savedCounter.name
+                        , Html.Events.onInput (UpdateCounterText idx)
+                        ]
+                        []
+                    , Html.button [ ourOnClick (SaveCounterText idx) ] [ Html.text "save" ]
+                    ]
 
             else
                 Html.text savedCounter.name
@@ -167,3 +206,8 @@ renderSavedCounter idx savedCounter =
         , Html.text ", "
         , writtenArea
         ]
+
+
+ourOnClick : Msg -> Html.Attribute Msg
+ourOnClick msg =
+    Html.Events.stopPropagationOn "click" (Decode.succeed ( msg, True ))
