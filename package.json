@@ -1,0 +1,27 @@
+{
+  "name": "elm-dojo",
+  "version": "1.0.0",
+  "description": "* Install elm:",
+  "main": "elm.js",
+  "scripts": {
+    "start": "parcel index.html"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/strickinato/elm-dojo.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/strickinato/elm-dojo/issues"
+  },
+  "homepage": "https://github.com/strickinato/elm-dojo#readme",
+  "dependencies": {
+    "dotenv": "^8.1.0"
+  },
+  "devDependencies": {
+    "elm-hot": "^1.1.2",
+    "node-elm-compiler": "^5.0.4",
+    "parcel-bundler": "^1.12.3"
+  }
+}

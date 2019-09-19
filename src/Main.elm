@@ -17,8 +17,12 @@ type alias Model =
     {}
 
 
-initialModel : () -> ( Model, Cmd Msg )
-initialModel _ =
+type alias Flags =
+    String
+
+
+initialModel : Flags -> ( Model, Cmd Msg )
+initialModel slackToken =
     ( {}, Cmd.none )
 
 
