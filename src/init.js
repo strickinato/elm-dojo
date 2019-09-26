@@ -1,4 +1,4 @@
-import { Elm } from './src/Main.elm'
+import { Elm } from './Main.elm'
 
 const SLACK_API_TOKEN = process.env.SLACK_API_TOKEN
 
