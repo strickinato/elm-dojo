@@ -1,16 +1,22 @@
 # Get Setup
 
-* Install elm:
+## Make sure you have slack token configured
 
-`> npm install -g elm`
+We use [parcel](https://parceljs.org/env.html) to build the app, which looks in .env for env configuration
+
+`$ echo 'SLACK_API_TOKEN=<YOUR SLACK API TOKEN>' > .env`
+
+* Install the stuff!:
+
+`$ yarn`
 
 * Start running
 
-`> ./run.sh`
+`$ yarn start`
 
 * See your work
 
-[](http://localhost:8000)
+[here!](http://localhost:1234)
 
 
 

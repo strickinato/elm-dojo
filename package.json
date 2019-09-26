@@ -16,9 +16,7 @@
     "url": "https://github.com/strickinato/elm-dojo/issues"
   },
   "homepage": "https://github.com/strickinato/elm-dojo#readme",
-  "dependencies": {
-    "dotenv": "^8.1.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "elm-hot": "^1.1.2",
     "node-elm-compiler": "^5.0.4",
