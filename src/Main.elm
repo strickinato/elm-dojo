@@ -2,8 +2,10 @@ module Main exposing (main)
 
 import Browser
 import Html exposing (Html)
+import Html.Attributes
 import Http
 import Json.Decode as Decode exposing (Decoder)
+import Json.Decode.Pipeline exposing (hardcoded, optional, required, requiredAt)
 
 
 main =
@@ -23,7 +25,7 @@ type alias Model =
 
 type ApplicationData
     = Fetching
-    | HasData String
+    | HasData (List User)
     | Error Http.Error
 
 
@@ -47,7 +49,7 @@ subscriptions model =
 
 type Msg
     = NoOp
-    | GotUsers (Result Http.Error String)
+    | GotUsers (Result Http.Error (List User))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -77,11 +79,12 @@ view model =
         Fetching ->
             Html.text "Loading"
 
-        HasData string ->
-            Html.div [] [ Html.text string ]
+        HasData listUsers ->
+            List.map renderUser listUsers
+                |> Html.ul []
 
         Error httpError ->
-            Html.text "SOMETHING IS MESSED UP"
+            Html.text "Other error message"
 
 
 getUsers : String -> Cmd Msg
@@ -92,20 +95,39 @@ getUsers token =
         }
 
 
-{-|
-
-    What's wrong with this?
-        - We're getting back real data... and we'd expect to be able to decode it into a string
-        - We're saying "We expect the value of the HTTP response will be a string"
-        - However, we're doing Decode.value.
-        - Under the hood, the Http package accounts for *not* decoding properly
-          by wrapping it into the BadBody error type
-        - See: https://package.elm-lang.org/packages/elm/http/latest/Http#Error
-
--}
-usersDecoder : Decoder String
+usersDecoder : Decoder (List User)
 usersDecoder =
-    Decode.string
+    Decode.field "members" (Decode.list userDecoder)
+
+
+userDecoder : Decoder User
+userDecoder =
+    Decode.succeed User
+        |> required "name" Decode.string
+        |> required "is_bot" Decode.bool
+        |> requiredAt [ "profile", "image_24" ] Decode.string
+
+
+type alias User =
+    { name : String
+    , bot : Bool
+    , profilePic : String
+    }
+
+
+renderUser : User -> Html Msg
+renderUser user =
+    if user.bot then
+        Html.li []
+            [ Html.text "\u{1F916}"
+            , Html.text user.name
+            ]
+
+    else
+        Html.li []
+            [ Html.img [ Html.Attributes.src user.profilePic, Html.Attributes.alt user.name ] []
+            , Html.text user.name
+            ]
 
 
 slackUserEndpoint : String -> String
