@@ -9,13 +9,16 @@ const app = Elm.Main.init({
 });
 
 app.ports.decrypt.subscribe(secret => {
-  const bytes  = CryptoJS.AES.decrypt(ENCRYPTED_SLACK_API_TOKEN, secret);
   try {
+    
+    const bytes     = CryptoJS.AES.decrypt(ENCRYPTED_SLACK_API_TOKEN, secret);
     const plaintext = bytes.toString(CryptoJS.enc.Utf8)
-    console.log(plaintext)
-    if (plaintext.startsWith('xoxp')) {
-        app.ports.getDecrypted.send()  
+    
+    if (plaintext.startsWith('xoxp'))
+    {
+        app.ports.getDecrypted.send(plaintext)  
     }
+    
   } catch {
     console.error('decryption didnt go well. whatever ignore')
   }
