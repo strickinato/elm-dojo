@@ -68,8 +68,15 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
             
-        GotDecrypted _ ->
-            (model, Cmd.none)
+        GotDecrypted decryptedApiToken ->
+            let
+                cmd =
+                    decryptedApiToken
+                        |> Decode.decodeValue Decode.string
+                        |> Result.map getUsers
+                        |> Result.withDefault Cmd.none
+            in   
+            (model, cmd)
 
         InputAuthString string ->
             ( { model | authString = string }
@@ -97,11 +104,7 @@ view model =
         Fetching ->
             Html.div []
               [ Html.text "Loading"
-              , Html.input
-                  [ Html.Attributes.value model.authString
-                  , onInput InputAuthString
-                  ]
-                  []
+              , authInput model.authString
               ]
 
         HasData listUsers ->
@@ -109,13 +112,24 @@ view model =
                 |> Html.ul []
 
         Error httpError ->
-            Html.text "Other error message"
+            Html.div []
+              [ Html.text "Some error happened"
+              , authInput model.authString
+              ]
 
 
-getUsers : String -> String -> Cmd Msg
-getUsers authString hashedSlackToken =
+authInput : String -> Html Msg
+authInput value =
+    Html.input
+        [ Html.Attributes.value value
+        , onInput InputAuthString
+        ]
+        []
+
+getUsers : String -> Cmd Msg
+getUsers hashedSlackToken =
     Http.get
-        { url = slackUserEndpoint authString hashedSlackToken
+        { url = slackUserEndpoint hashedSlackToken
         , expect = Http.expectJson GotUsers usersDecoder
         }
 
@@ -155,9 +169,9 @@ renderUser user =
             ]
 
 
-slackUserEndpoint : String -> String -> String
-slackUserEndpoint authString hashedSlackToken =
+slackUserEndpoint : String -> String
+slackUserEndpoint slackToken =
     String.concat
         [ "https://slack.com/api/users.list?token="
-        , hashedSlackToken
+        , slackToken
         ]
