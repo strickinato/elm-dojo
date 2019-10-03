@@ -3,6 +3,7 @@ port module Main exposing (main)
 import Browser
 import Html exposing (Html)
 import Html.Attributes
+import Html.Events exposing (onInput)
 import Http
 import Json.Encode as Encode
 import Json.Decode as Decode exposing (Decoder)
@@ -20,7 +21,7 @@ main =
 
 port decrypt : Encode.Value -> Cmd msg
 
-port getDecrypted : (Encode.Value -> Msg) -> Sub Msg
+port getDecrypted : (Encode.Value -> msg) -> Sub msg
 
 type alias Model =
     { hashedSlackToken : String
@@ -51,12 +52,14 @@ initialModel hashedSlackToken =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    getDecrypted GotDecrypted
 
 
 type Msg
     = NoOp
     | GotUsers (Result Http.Error (List User))
+    | GotDecrypted Encode.Value
+    | InputAuthString String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -64,6 +67,14 @@ update msg model =
     case msg of
         NoOp ->
             ( model, Cmd.none )
+            
+        GotDecrypted _ ->
+            (model, Cmd.none)
+
+        InputAuthString string ->
+            ( { model | authString = string }
+            , decrypt (Encode.string string)
+            )
 
         GotUsers result ->
             let
@@ -84,7 +95,14 @@ view : Model -> Html Msg
 view model =
     case model.applicationData of
         Fetching ->
-            Html.text "Loading"
+            Html.div []
+              [ Html.text "Loading"
+              , Html.input
+                  [ Html.Attributes.value model.authString
+                  , onInput InputAuthString
+                  ]
+                  []
+              ]
 
         HasData listUsers ->
             List.map renderUser listUsers
