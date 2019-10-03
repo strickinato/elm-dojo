@@ -1,9 +1,10 @@
-module Main exposing (main)
+port module Main exposing (main)
 
 import Browser
 import Html exposing (Html)
 import Html.Attributes
 import Http
+import Json.Encode as Encode
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (hardcoded, optional, required, requiredAt)
 
@@ -17,6 +18,9 @@ main =
         , subscriptions = subscriptions
         }
 
+port decrypt : Encode.Value -> Cmd msg
+
+port getDecrypted : (Encode.Value -> Msg) -> Sub Msg
 
 type alias Model =
     { hashedSlackToken : String

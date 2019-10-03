@@ -1,8 +1,22 @@
 import { Elm } from './Main.elm'
+import * as CryptoJS from "crypto-js"
 
-const HASHED_SLACK_API_TOKEN = process.env.HASHED_SLACK_API_TOKEN
+const SLACK_API_TOKEN = process.env.SLACK_API_TOKEN
 
-Elm.Main.init({
+ 
+// Encrypt
+const ciphertext = CryptoJS.AES.encrypt('my message', 'secret key 123');
+ 
+// Decrypt
+const bytes  = CryptoJS.AES.decrypt(ciphertext.toString(), 'secret key 123');
+const plaintext = bytes.toString(CryptoJS.enc.Utf8);
+ 
+
+const app = Elm.Main.init({
     node: document.getElementById("mount"),
-    flags: HASHED_SLACK_API_TOKEN,
+    flags: SLACK_API_TOKEN,
+});
+
+app.ports.decrypt.subscribe(data => {
+  console.log(data)
 });
