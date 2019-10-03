@@ -1,8 +1,8 @@
 import { Elm } from './Main.elm'
 
-const SLACK_API_TOKEN = process.env.SLACK_API_TOKEN
+const HASHED_SLACK_API_TOKEN = process.env.HASHED_SLACK_API_TOKEN
 
 Elm.Main.init({
     node: document.getElementById("mount"),
-    flags: SLACK_API_TOKEN,
+    flags: HASHED_SLACK_API_TOKEN,
 });

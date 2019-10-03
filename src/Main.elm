@@ -19,7 +19,8 @@ main =
 
 
 type alias Model =
-    { slackToken : String
+    { hashedSlackToken : String
+    , authString : String
     , applicationData : ApplicationData
     }
 
@@ -35,11 +36,12 @@ type alias Flags =
 
 
 initialModel : Flags -> ( Model, Cmd Msg )
-initialModel slackToken =
-    ( { slackToken = slackToken
+initialModel hashedSlackToken =
+    ( { hashedSlackToken = hashedSlackToken
+      , authString = ""
       , applicationData = Fetching
       }
-    , getUsers slackToken
+    , Cmd.none
     )
 
 
@@ -88,10 +90,10 @@ view model =
             Html.text "Other error message"
 
 
-getUsers : String -> Cmd Msg
-getUsers token =
+getUsers : String -> String -> Cmd Msg
+getUsers authString hashedSlackToken =
     Http.get
-        { url = slackUserEndpoint token
+        { url = slackUserEndpoint authString hashedSlackToken
         , expect = Http.expectJson GotUsers usersDecoder
         }
 
@@ -131,9 +133,9 @@ renderUser user =
             ]
 
 
-slackUserEndpoint : String -> String
-slackUserEndpoint token =
+slackUserEndpoint : String -> String -> String
+slackUserEndpoint authString hashedSlackToken =
     String.concat
         [ "https://slack.com/api/users.list?token="
-        , token
+        , hashedSlackToken
         ]
