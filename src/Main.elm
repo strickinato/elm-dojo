@@ -8,6 +8,7 @@ import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (hardcoded, optional, required, requiredAt)
 
 
+
 main =
     Browser.element
         { init = initialModel

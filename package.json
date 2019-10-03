@@ -17,11 +17,10 @@
   },
   "homepage": "https://github.com/strickinato/elm-dojo#readme",
   "dependencies": {
-      "parcel-bundler": "^1.12.3"
+    "parcel-bundler": "^1.12.3"
   },
   "devDependencies": {
     "elm-hot": "^1.1.2",
     "node-elm-compiler": "^5.0.4"
-
   }
 }
