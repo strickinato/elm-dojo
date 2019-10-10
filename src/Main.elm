@@ -116,10 +116,12 @@ view model =
               ]
               
 renderUsers : List User -> Html Msg
-renderUsers users = 
-    List.map renderUser (List.filter ___ users)
-        |> Html.ul []
-        
+renderUsers users =
+        users
+          |> List.filter (not << .bot)
+          |> List.filter (not << .deleted)
+          |> List.map renderUser
+          |> Html.ul []
 
 
 authInput : String -> Html Msg
@@ -149,12 +151,15 @@ userDecoder =
         |> required "name" Decode.string
         |> required "is_bot" Decode.bool
         |> requiredAt [ "profile", "image_24" ] Decode.string
+        |> required "deleted" Decode.bool
+        
 
 
 type alias User =
     { name : String
     , bot : Bool
     , profilePic : String
+    , deleted : Bool
     }
 
 
