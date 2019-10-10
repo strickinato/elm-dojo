@@ -45,7 +45,7 @@ initialModel hashedSlackToken =
       , authString = ""
       , applicationData = Fetching
       }
-    , Cmd.none
+    , decrypt (Encode.string "secret key 123")
     )
 
 subscriptions : Model -> Sub Msg
@@ -106,14 +106,20 @@ view model =
               ]
 
         HasData listUsers ->
-            List.map renderUser listUsers
-                |> Html.ul []
+            renderUsers listUsers
+
 
         Error httpError ->
             Html.div []
               [ Html.text "Some error happened"
               , authInput model.authString
               ]
+              
+renderUsers : List User -> Html Msg
+renderUsers users = 
+    List.map renderUser (List.filter ___ users)
+        |> Html.ul []
+        
 
 
 authInput : String -> Html Msg
