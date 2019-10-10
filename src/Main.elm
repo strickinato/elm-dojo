@@ -45,7 +45,7 @@ initialModel hashedSlackToken =
       , authString = ""
       , applicationData = Fetching
       }
-    , decrypt (Encode.string "secret key 123")
+    , Cmd.none
     )
 
 subscriptions : Model -> Sub Msg
@@ -152,12 +152,12 @@ userDecoder =
         |> required "is_bot" Decode.bool
         |> requiredAt [ "profile", "image_24" ] Decode.string
         |> required "deleted" Decode.bool
-        |> optional "tz_offset" Decode.int hqOffset
+        |> optional "tz_offset" decodeTimeZoneOffset hqOffset
         
 
-hqOffset : Int
+hqOffset : TimeZoneOffset
 hqOffset =
-    -25200
+    TimeZoneOffsetConstructor -25200
 
 type alias User =
     { name : String
@@ -168,19 +168,23 @@ type alias User =
     }
 
 type TimeZoneOffset =
-    TimeZoneOffset Int
+    TimeZoneOffsetConstructor Int
     
 decodeTimeZoneOffset : Decoder TimeZoneOffset
 decodeTimeZoneOffset =
-    
+    Decode.map TimeZoneOffsetConstructor Decode.int
 
+timeZoneAsText : TimeZoneOffset -> String
+timeZoneAsText (TimeZoneOffsetConstructor int) =
+    String.fromInt (int // 3600)
+  
 
 renderUser : User -> Html Msg
 renderUser user =
     Html.li []
         [ Html.img [ Html.Attributes.src user.profilePic, Html.Attributes.alt user.name ] []
         , Html.text user.name
-        , Html.text (String.fromInt user.timeZoneOffset)
+        , Html.text (timeZoneAsText user.timeZoneOffset)
         ]
 
 
