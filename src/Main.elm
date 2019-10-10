@@ -152,30 +152,36 @@ userDecoder =
         |> required "is_bot" Decode.bool
         |> requiredAt [ "profile", "image_24" ] Decode.string
         |> required "deleted" Decode.bool
+        |> optional "tz_offset" Decode.int hqOffset
         
 
+hqOffset : Int
+hqOffset =
+    -25200
 
 type alias User =
     { name : String
     , bot : Bool
     , profilePic : String
     , deleted : Bool
+    , timeZoneOffset : TimeZoneOffset
     }
+
+type TimeZoneOffset =
+    TimeZoneOffset Int
+    
+decodeTimeZoneOffset : Decoder TimeZoneOffset
+decodeTimeZoneOffset =
+    
 
 
 renderUser : User -> Html Msg
 renderUser user =
-    if user.bot then
-        Html.li []
-            [ Html.text "\u{1F916}"
-            , Html.text user.name
-            ]
-
-    else
-        Html.li []
-            [ Html.img [ Html.Attributes.src user.profilePic, Html.Attributes.alt user.name ] []
-            , Html.text user.name
-            ]
+    Html.li []
+        [ Html.img [ Html.Attributes.src user.profilePic, Html.Attributes.alt user.name ] []
+        , Html.text user.name
+        , Html.text (String.fromInt user.timeZoneOffset)
+        ]
 
 
 slackUserEndpoint : String -> String
