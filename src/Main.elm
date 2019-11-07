@@ -1,14 +1,18 @@
 port module Main exposing (main)
 
-
 import Browser
 import Html exposing (Html)
-import Html.Attributes
+import Html.Attributes exposing (style)
 import Html.Events exposing (onInput)
 import Http
-import Json.Encode as Encode
 import Json.Decode as Decode exposing (Decoder)
-import Json.Decode.Pipeline exposing (hardcoded, optional, required, requiredAt)
+import Json.Encode as Encode
+import Task
+import Time
+import Time.Format
+import Time.Format.Config.Config_en_us as UsConfig
+import TimeZoneOffset exposing (TimeZoneOffset)
+import User exposing (User)
 
 
 main =
@@ -19,14 +23,18 @@ main =
         , subscriptions = subscriptions
         }
 
+
 port decrypt : Encode.Value -> Cmd msg
 
+
 port getDecrypted : (Encode.Value -> msg) -> Sub msg
+
 
 type alias Model =
     { hashedSlackToken : String
     , authString : String
     , applicationData : ApplicationData
+    , time : Time.Posix
     }
 
 
@@ -45,9 +53,24 @@ initialModel hashedSlackToken =
     ( { hashedSlackToken = hashedSlackToken
       , authString = ""
       , applicationData = Fetching
+      , time = Time.millisToPosix 0
       }
-    , Cmd.none
+    , initCmd
     )
+
+
+initCmd : Cmd Msg
+initCmd =
+    Cmd.batch
+        [ getTime
+        , decrypt (Encode.string "secret key 123")
+        ]
+
+
+getTime : Cmd Msg
+getTime =
+    Task.perform NewTime Time.now
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -59,6 +82,7 @@ type Msg
     | GotUsers (Result Http.Error (List User))
     | GotDecrypted Encode.Value
     | InputAuthString String
+    | NewTime Time.Posix
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -66,7 +90,7 @@ update msg model =
     case msg of
         NoOp ->
             ( model, Cmd.none )
-            
+
         GotDecrypted decryptedApiToken ->
             let
                 cmd =
@@ -74,8 +98,8 @@ update msg model =
                         |> Decode.decodeValue Decode.string
                         |> Result.map getUsers
                         |> Result.withDefault Cmd.none
-            in   
-            (model, cmd)
+            in
+            ( model, cmd )
 
         InputAuthString string ->
             ( { model | authString = string }
@@ -96,33 +120,36 @@ update msg model =
             , Cmd.none
             )
 
+        NewTime posix ->
+            ( { model | time = posix }, Cmd.none )
+
 
 view : Model -> Html Msg
 view model =
     case model.applicationData of
         Fetching ->
             Html.div []
-              [ Html.text "Loading"
-              , authInput model.authString
-              ]
+                [ Html.text (String.fromInt (Time.toYear Time.utc model.time))
+                , Html.text "Loading"
+                , authInput model.authString
+                ]
 
         HasData listUsers ->
-            renderUsers listUsers
-
+            renderUsers model.time listUsers
 
         Error httpError ->
             Html.div []
-              [ Html.text "Some error happened"
-              , authInput model.authString
-              ]
-              
-renderUsers : List User -> Html Msg
-renderUsers users =
-        users
-          |> List.filter (not << .bot)
-          |> List.filter (not << .deleted)
-          |> List.map renderUser
-          |> Html.ul []
+                [ Html.text "Some error happened"
+                , authInput model.authString
+                ]
+
+
+renderUsers : Time.Posix -> List User -> Html Msg
+renderUsers posix users =
+    users
+        |> List.filter User.isActiveNonBot
+        |> List.map (renderUser posix)
+        |> Html.ul []
 
 
 authInput : String -> Html Msg
@@ -133,59 +160,43 @@ authInput value =
         ]
         []
 
+
 getUsers : String -> Cmd Msg
 getUsers hashedSlackToken =
     Http.get
         { url = slackUserEndpoint hashedSlackToken
-        , expect = Http.expectJson GotUsers usersDecoder
+        , expect = Http.expectJson GotUsers User.decodeList
         }
 
 
-usersDecoder : Decoder (List User)
-usersDecoder =
-    Decode.field "members" (Decode.list userDecoder)
+newDisplay : Time.Posix -> TimeZoneOffset -> String
+newDisplay posix timeZoneOffset =
+    -- TODO USE OFFSET
+    Time.Format.format UsConfig.config "%H:%M" Time.utc posix
 
 
-userDecoder : Decoder User
-userDecoder =
-    Decode.succeed User
-        |> required "name" Decode.string
-        |> required "is_bot" Decode.bool
-        |> requiredAt [ "profile", "image_24" ] Decode.string
-        |> required "deleted" Decode.bool
-        |> optional "tz_offset" decodeTimeZoneOffset hqOffset
-        
+displayUserTime : Time.Posix -> TimeZoneOffset -> String
+displayUserTime now userTimeOffset =
+    let
+        hour =
+            Time.toHour Time.utc now
+                + TimeZoneOffset.asInt userTimeOffset
 
-hqOffset : TimeZoneOffset
-hqOffset =
-    TimeZoneOffsetConstructor -25200
+        hourTime =
+            modBy 12 hour
 
-type alias User =
-    { name : String
-    , bot : Bool
-    , profilePic : String
-    , deleted : Bool
-    , timeZoneOffset : TimeZoneOffset
-    }
+        minutes =
+            Time.toMinute Time.utc now
+    in
+    String.fromInt hourTime ++ ":" ++ String.fromInt minutes
 
-type TimeZoneOffset =
-    TimeZoneOffsetConstructor Int
-    
-decodeTimeZoneOffset : Decoder TimeZoneOffset
-decodeTimeZoneOffset =
-    Decode.map TimeZoneOffsetConstructor Decode.int
 
-timeZoneAsText : TimeZoneOffset -> String
-timeZoneAsText (TimeZoneOffsetConstructor int) =
-    String.fromInt (int // 3600)
-  
-
-renderUser : User -> Html Msg
-renderUser user =
+renderUser : Time.Posix -> User -> Html Msg
+renderUser posix user =
     Html.li []
         [ Html.img [ Html.Attributes.src user.profilePic, Html.Attributes.alt user.name ] []
-        , Html.text user.name
-        , Html.text (timeZoneAsText user.timeZoneOffset)
+        , Html.span [ style "margin" "8px" ] [ Html.text user.name ]
+        , Html.text (newDisplay posix user.timeZoneOffset)
         ]
 
 
