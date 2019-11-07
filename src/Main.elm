@@ -151,7 +151,6 @@ renderUsers posix users =
         |> List.map (renderUser posix)
         |> Html.ul []
 
-
 authInput : String -> Html Msg
 authInput value =
     Html.input
@@ -171,8 +170,7 @@ getUsers hashedSlackToken =
 
 newDisplay : Time.Posix -> TimeZoneOffset -> String
 newDisplay posix timeZoneOffset =
-    -- TODO USE OFFSET
-    Time.Format.format UsConfig.config "%H:%M" Time.utc posix
+    Time.Format.format UsConfig.config "%H:%M" (TimeZoneOffset.toTimeZone timeZoneOffset) posix
 
 
 displayUserTime : Time.Posix -> TimeZoneOffset -> String
@@ -195,7 +193,7 @@ renderUser : Time.Posix -> User -> Html Msg
 renderUser posix user =
     Html.li []
         [ Html.img [ Html.Attributes.src user.profilePic, Html.Attributes.alt user.name ] []
-        , Html.span [ style "margin" "8px" ] [ Html.text user.name ]
+        , Html.span [ style "margin" "8px", Html.Attributes.class "nate" ] [ Html.text user.name ]
         , Html.text (newDisplay posix user.timeZoneOffset)
         ]
 

@@ -1,5 +1,6 @@
-module TimeZoneOffset exposing (TimeZoneOffset, asInt, decode, fromInt)
+module TimeZoneOffset exposing (TimeZoneOffset, asInt, decode, fromInt, toTimeZone)
 
+import Time
 import Json.Decode as Decode exposing (Decoder)
 
 
@@ -20,6 +21,10 @@ asInt (TimeZoneOffsetConstructor int) =
 asText : TimeZoneOffset -> String
 asText tz =
     String.fromInt (asInt tz)
+
+toTimeZone : TimeZoneOffset -> Time.Zone
+toTimeZone timezoneOffset =
+    Time.utc
 
 
 decode : Decoder TimeZoneOffset

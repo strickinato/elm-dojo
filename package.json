@@ -4,7 +4,7 @@
   "description": "* Install elm:",
   "main": "server.js",
   "scripts": {
-    "start": "parcel src/index.html -p 3000"
+      "start": "parcel src/index.html -p 3000"
   },
   "repository": {
     "type": "git",
