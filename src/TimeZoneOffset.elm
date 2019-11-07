@@ -15,7 +15,7 @@ fromInt int =
 
 asInt : TimeZoneOffset -> Int
 asInt (TimeZoneOffsetConstructor int) =
-    int // 3600
+    int * 60// 3600
 
 
 asText : TimeZoneOffset -> String
@@ -24,8 +24,8 @@ asText tz =
 
 toTimeZone : TimeZoneOffset -> Time.Zone
 toTimeZone timezoneOffset =
-    Time.utc
-
+    Time.customZone (asInt timezoneOffset) []
+     
 
 decode : Decoder TimeZoneOffset
 decode =
